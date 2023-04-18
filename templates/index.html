@@ -2,6 +2,15 @@
 
 {% block content %}
 
-
+<h1>
+    {% if current_user.is_authenticated %}
+        Congrats, you are logged in!
+    {% else %}
+        You are not logged in :(
+    {% endif %}
+</h1>
+{% if current_user.is_authenticated %}
+    <a href="review" class="btn btn-secondary">Review something</a>
+{% endif %}
 
 {% endblock %}
