@@ -3,9 +3,7 @@ from wtforms import TextAreaField, BooleanField, SubmitField, IntegerField
 from wtforms.validators import DataRequired
 
 
-class ReviewForm(FlaskForm):
-    positive = BooleanField('Do you recommend it?')
+class AddGameForm(FlaskForm):
     steam_id = IntegerField('Game id on Steam', validators=[DataRequired()])
-    content = TextAreaField("Content ahead", validators=[DataRequired()])
-    is_private = BooleanField("private?")
+    status = IntegerField('How is it now?', validators=[DataRequired()])
     submit = SubmitField('Submit')

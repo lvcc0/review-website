@@ -14,7 +14,8 @@ class User(SqlAlchemyBase, UserMixin):
     nickname = sa.Column(sa.String)
     hashed_password = sa.Column(sa.String)
 
-    user_relations = orm.relationship("UserGame", secondary="user_association", backref="users")
+    reviews = orm.relationship('Association', back_populates='users')
+    game_status = orm.relationship('Status', back_populates='users')
 
     def set_password(self, password):
         self.hashed_password = generate_password_hash(password)

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>{{ user.nickname }}</h1>
+
+{% for review in reviews %}
+    <h2>{{ review.id }} {{ review.content}}</h2>
+{% endfor %}
+
+{% endblock %}

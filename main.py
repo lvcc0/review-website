@@ -5,10 +5,12 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from forms.register import RegisterForm
 from forms.login import LoginForm
 from forms.review import ReviewForm
+from forms.addgame import AddGameForm
 
 from data import db_session
 from data.users import User
 from data.reviews import Review
+from data.users_to_reviews import Association
 
 
 app = Flask(__name__)
@@ -92,16 +94,42 @@ def review():
 
         review = Review()
         review.positive = form.positive.data
+        review.steam_id = form.steam_id.data
         review.content = form.content.data
         review.is_private = form.is_private.data
+        db_sess.add(review)
+        db_sess.commit()
 
-        current_user.reviews.append(review)
-        db_sess.merge(current_user)
+        # current_user.reviews.append(review)
+
+        association = Association()
+        association.user_id = current_user.id
+        association.review_id = review.id
+        db_sess.add(association)
         db_sess.commit()
 
         return redirect('/')
     
     return render_template('review.html', title='Reviewing a game', form=form)
+
+
+@login_required
+@app.route('/add_game', methods=['GET', 'POST'])
+def add_game():
+    form = AddGameForm()
+
+
+
+
+@login_required
+@app.route('/user/<int:user_id>', methods=['GET'])
+def user_account(user_id):
+    db_sess = db_session.create_session()
+    user = db_sess.query(User).filter(User.id == user_id).first()
+    associations = db_sess.query(Association).filter(Association.user_id == user_id).all()
+    reviews = [db_sess.query(Review).filter(Review.id == ass.review_id).first() for ass in associations]
+
+    return render_template('user_account.html', user=user, reviews=reviews)
 
 
 def main():

@@ -14,5 +14,3 @@ class Review(SqlAlchemyBase):
     is_private = sa.Column(sa.Boolean, default=True)
     created_date = sa.Column(sa.DateTime, default = datetime.now)
     steam_id = sa.Column(sa.Integer)
-
-    user_relations = orm.relationship("UserGame", secondary="review_association", backref="reviews")
