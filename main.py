@@ -1,6 +1,6 @@
-from flask import Flask, render_template, redirect
-import datetime
+from flask import Flask, render_template, redirect, url_for
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+import datetime
 
 from forms.register import RegisterForm
 from forms.login import LoginForm
@@ -11,6 +11,7 @@ from data import db_session
 from data.users import User
 from data.reviews import Review
 from data.users_to_reviews import Association
+from data.game_status import Status
 
 
 app = Flask(__name__)
@@ -62,10 +63,10 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    db_sess = db_session.create_session()
     form = LoginForm()
 
     if form.validate_on_submit():
-        db_sess = db_session.create_session()
         user = db_sess.query(User).filter(User.email == form.email.data).first()
 
         if user and user.check_password(form.password.data):
@@ -77,20 +78,13 @@ def login():
     return render_template('login.html', title='Login', form=form)
 
 
-@login_required
-@app.route('/logout')
-def logout():
-    logout_user()
-    return redirect('/')
-
-
-@login_required
 @app.route('/review', methods=['GET', 'POST'])
+@login_required
 def review():
+    db_sess = db_session.create_session()
     form = ReviewForm()
 
     if form.validate_on_submit():
-        db_sess = db_session.create_session()
 
         review = Review()
         review.positive = form.positive.data
@@ -99,8 +93,6 @@ def review():
         review.is_private = form.is_private.data
         db_sess.add(review)
         db_sess.commit()
-
-        # current_user.reviews.append(review)
 
         association = Association()
         association.user_id = current_user.id
@@ -113,23 +105,65 @@ def review():
     return render_template('review.html', title='Reviewing a game', form=form)
 
 
-@login_required
 @app.route('/add_game', methods=['GET', 'POST'])
-def add_game():
-    form = AddGameForm()
-
-
-
-
 @login_required
+def add_game():
+    db_sess = db_session.create_session()
+    form = AddGameForm()
+    
+    if form.validate_on_submit():
+
+        status = Status()
+        status.user_id = current_user.id
+        status.steam_id = form.steam_id.data
+        status.status = form.status.data
+
+        db_sess.add(status)
+        db_sess.commit()
+
+        return render_template('add_game.html',
+                               message=f'You added {status.steam_id} to your {AddGameForm.status_list[status.status]} list!',
+                               form=form)
+    
+    return render_template('add_game.html', title='Adding a game', form=form)
+
+
+
 @app.route('/user/<int:user_id>', methods=['GET'])
 def user_account(user_id):
     db_sess = db_session.create_session()
+
     user = db_sess.query(User).filter(User.id == user_id).first()
     associations = db_sess.query(Association).filter(Association.user_id == user_id).all()
     reviews = [db_sess.query(Review).filter(Review.id == ass.review_id).first() for ass in associations]
 
-    return render_template('user_account.html', user=user, reviews=reviews)
+    return render_template('user_account.html', title=user.nickname, user=user, reviews=reviews)
+
+
+@app.route('/user')
+@login_required
+def user_settings():
+    db_sess = db_session.create_session()
+
+    game_status = db_sess.query(Status).filter(Status.user_id == current_user.id).all()
+    associations = db_sess.query(Association).filter(Association.user_id == current_user.id).all()
+    reviews = [db_sess.query(Review).filter(Review.id == ass.review_id).first() for ass in associations]
+
+    return render_template('user_settings.html', title=f'{current_user.nickname} settings and stuff',
+                           game_status=game_status, status_list=AddGameForm.status_list,
+                           reviews=reviews, user=current_user)
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect('/')    
+
+
+@app.errorhandler(401)
+def invalid_auth(e):
+    return redirect('/')
 
 
 def main():
@@ -138,3 +172,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+# TODO errorhandler redirect template

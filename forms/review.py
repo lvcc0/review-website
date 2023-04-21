@@ -8,4 +8,5 @@ class ReviewForm(FlaskForm):
     steam_id = IntegerField('Game id on Steam', validators=[DataRequired()])
     content = TextAreaField("Content ahead", validators=[DataRequired()])
     is_private = BooleanField("private?")
+    
     submit = SubmitField('Submit')
