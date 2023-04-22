@@ -1,6 +1,7 @@
 from flask import Flask, render_template, redirect, url_for
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 import datetime
+import requests
 
 from forms.register import RegisterForm
 from forms.login import LoginForm
@@ -105,12 +106,16 @@ def review():
     return render_template('review.html', title='Reviewing a game', form=form)
 
 
-@app.route('/add_game', methods=['GET', 'POST'])
+@app.route('/add_game/', methods=['GET', 'POST'])
+@app.route('/add_game/<int:game_id>', methods=['GET', 'POST'])
 @login_required
-def add_game():
+def add_game(game_id=None):
     db_sess = db_session.create_session()
     form = AddGameForm()
-    
+
+    if game_id != None:
+        form.steam_id.data = game_id
+
     if form.validate_on_submit():
 
         status = Status()
@@ -126,7 +131,6 @@ def add_game():
                                form=form)
     
     return render_template('add_game.html', title='Adding a game', form=form)
-
 
 
 @app.route('/user/<int:user_id>', methods=['GET'])
@@ -161,6 +165,23 @@ def logout():
     return redirect('/')    
 
 
+@app.route('/game/<int:game_id>')
+def game_page(game_id):
+    data = requests.get(f'https://store.steampowered.com/api/appdetails/?appids={game_id}&cc=EE&l=english&v=1').json()
+    table_data = {
+        'Developer': ', '.join(data[str(game_id)]['data']['developers']),
+        'Publisher': ', '.join(data[str(game_id)]['data']['publishers']),
+        'Release date': data[str(game_id)]['data']['release_date']['date']
+    }
+
+    if not data[str(game_id)]['success']:
+        return redirect('/')
+
+    return render_template('game_page.html', title=data[str(game_id)]['data']['name'],
+                           data=data[str(game_id)]['data'], table_data=table_data,
+                           game_id=game_id, current_user=current_user)
+
+
 @app.errorhandler(401)
 def invalid_auth(e):
     return redirect('/')
@@ -175,3 +196,7 @@ if __name__ == '__main__':
 
 
 # TODO errorhandler redirect template
+# TODO when writing down the steam game id, show the actual game somewhere near
+# TODO add fancy review listing page to user public profile
+# TODO add some tops and stuff to the front page
+# TODO add search bar in navbar in base.html to search by id

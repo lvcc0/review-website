@@ -2,25 +2,28 @@
 
 {% block content %}
 
-<h1>A private place for <b>{{ user.nickname }}</b></h1>
-<div>
-    <h3>Overall stats</h3>
-    <ul>
-        {% for status in status_list %}
-            {% set ns = namespace (c = 0) %}
-            {% for row in game_status %}
-                {% if row.status == status_list.index(status) %}
-                    {% set ns.c = ns.c + 1 %}
-                {% endif %}
+<div class="container">
+    <h1>A private place for <strong>{{ user.nickname }}</strong></h1>
+    <div class="row">
+        <h3>Overall stats</h3>
+        <ul>
+            {% for status in status_list %}
+                {% set ns = namespace (c = 0) %}
+                {% for row in game_status %}
+                    {% if row.status == status_list.index(status) %}
+                        {% set ns.c = ns.c + 1 %}
+                    {% endif %}
+                {% endfor %}
+                <li><strong>{{ status }}</strong> >> <strong>{{ ns.c }}</strong></li>
             {% endfor %}
-            <li>{{ status }} >> {{ ns.c }}</li>
-        {% endfor %}
-    </ul>
-</div>
-
-<div>
-    <a href="/review" class="btn btn-secondary">Review something</a>
-    <a href="/add_game" class="btn btn-secondary">Add a game</a>
+            <li><strong>reviews</strong> >> <strong>{{ reviews|length }}</strong></li>
+        </ul>
+    </div>
+    <div>
+        <a href="/review" class="btn btn-secondary">Review something</a>
+        <a href="/add_game" class="btn btn-secondary">Add a game</a>
+        <a href="/user/{{ user.id }}" class="btn btn-secondary">Public profile</a>
+    </div>
 </div>
 
 {% endblock %}

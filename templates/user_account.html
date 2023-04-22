@@ -4,8 +4,21 @@
 
 <h1>{{ user.nickname }}</h1>
 
-{% for review in reviews %}
-    <h2>{{ review.id }} {{ review.content}}</h2>
-{% endfor %}
+{% if not user.stats_private %}
+    <div>
+        {% for review in reviews %}
+            <div>
+                {% if user.positive %}
+                    <p>I recommend it!</p>
+                {% else %}
+                    <p>I don't recommend it.</p>
+                {% endif %}
+
+                <p>Rated: {{ review.created_date }}</p>
+                <p>{{ review.content }}</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 
 {% endblock %}

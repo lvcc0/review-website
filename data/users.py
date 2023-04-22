@@ -14,6 +14,8 @@ class User(SqlAlchemyBase, UserMixin):
     nickname = sa.Column(sa.String)
     hashed_password = sa.Column(sa.String)
 
+    stats_private = sa.Column(sa.Boolean, default=False)
+
     reviews = orm.relationship('Association', back_populates='users')
     game_status = orm.relationship('Status', back_populates='users')
 
