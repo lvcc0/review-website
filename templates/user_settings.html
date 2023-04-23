@@ -4,25 +4,49 @@
 
 <div class="container">
     <h1>A private place for <strong>{{ user.nickname }}</strong></h1>
-    <div class="row">
-        <h3>Overall stats</h3>
-        <ul>
-            {% for status in status_list %}
-                {% set ns = namespace (c = 0) %}
-                {% for row in game_status %}
-                    {% if row.status == status_list.index(status) %}
-                        {% set ns.c = ns.c + 1 %}
-                    {% endif %}
-                {% endfor %}
-                <li><strong>{{ status }}</strong> >> <strong>{{ ns.c }}</strong></li>
-            {% endfor %}
-            <li><strong>reviews</strong> >> <strong>{{ reviews|length }}</strong></li>
-        </ul>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h3>Overall stats</h3>
+                <ul>
+                    {% for status in status_list %}
+                        {% set ns = namespace (c = 0) %}
+                        {% for row in game_status %}
+                            {% if row.status == status_list.index(status) %}
+                                {% set ns.c = ns.c + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        <li><strong>{{ status }}</strong> >> <strong>{{ ns.c }}</strong></li>
+                    {% endfor %}
+                    <li><strong>reviews</strong> >> <strong>{{ reviews|length }}</strong></li>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <a href="/review" class="btn btn-secondary">Review something</a>
+                <a href="/add_game" class="btn btn-secondary">Add a game</a>
+                <a href="/user/{{ user.id }}" class="btn btn-secondary">Public profile</a>
+            </div>
+        </div>
     </div>
-    <div>
-        <a href="/review" class="btn btn-secondary">Review something</a>
-        <a href="/add_game" class="btn btn-secondary">Add a game</a>
-        <a href="/user/{{ user.id }}" class="btn btn-secondary">Public profile</a>
+
+    <div class="container">
+        {% for row in game_status %}
+            <div class="p-5 bg-body-tertiary border rounded-3 row row-cols-2">
+                <div class="col-8">
+                    <h3><strong>{{ data[loop.index - 1]['data']['name'] }}</strong></h3>
+                    <h5>{{ status_list[row.status] }}</h5>
+                </div>
+                <div class="col-4">
+                    <img src="{{ data[loop.index - 1]['data']['header_image'] }}" width="324" height="151" alt=":)"/> <br />
+                    <a class="btn btn-primary" href="https://store.steampowered.com/app/{{ row.steam_id }}/">Store</a>
+                    <a class="btn btn-primary" href="https://steamcommunity.com/app/{{ row.steam_id }}/">Hub</a>
+                    <a class="btn btn-warning" href="/delete_game/{{ row.steam_id }}">Remove</a>
+                    <a class="btn btn-warning" href="/edit_game/{{ row.steam_id }}">Edit</a>
+                </div>
+            </div>
+        {% endfor %}
     </div>
 </div>
 

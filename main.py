@@ -1,5 +1,6 @@
-from flask import Flask, render_template, redirect, url_for
+from flask import Flask, render_template, redirect, url_for, request
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from itertools import islice
 import datetime
 import requests
 
@@ -33,7 +34,25 @@ def load_user(user_id):
 
 @app.route('/')
 def index():
-    return render_template('index.html', title='Cool website :0')
+    top100in2weeks = dict(islice(requests.get('https://steamspy.com/api.php?request=top100in2weeks').json().items(), 10))
+    datat100i2 = []
+
+    for key in top100in2weeks.keys():
+        datat100i2.append(requests.get(f'https://store.steampowered.com/api/appdetails/?appids={key}&cc=EE&l=english&v=1').json())
+
+    top100owned = dict(islice(requests.get('https://steamspy.com/api.php?request=top100owned').json().items(), 10))
+    datat100o = []
+
+    for key in top100owned.keys():
+        datat100o.append(requests.get(f'https://store.steampowered.com/api/appdetails/?appids={key}&cc=EE&l=english&v=1').json())
+
+    return render_template('index.html', title='Cool website :0', top100in2weeks=top100in2weeks,
+                           datat100i2=datat100i2, datat100o=datat100o, top100owned=top100owned)
+
+
+@app.route('/search')
+def search_page():
+    return redirect(f'/game/{request.args.get("q")}')
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -86,7 +105,6 @@ def review():
     form = ReviewForm()
 
     if form.validate_on_submit():
-
         review = Review()
         review.positive = form.positive.data
         review.steam_id = form.steam_id.data
@@ -117,11 +135,17 @@ def add_game(game_id=None):
         form.steam_id.data = game_id
 
     if form.validate_on_submit():
-
         status = Status()
         status.user_id = current_user.id
         status.steam_id = form.steam_id.data
         status.status = form.status.data
+
+        if not requests.get(f'https://store.steampowered.com/api/appdetails/?appids={str(status.steam_id)}&cc=EE&l=english&v=1').json()[str(status.steam_id)]['success']:
+            return render_template('add_game.html', title='Adding a game', form=form, message=f'There is no {status.steam_id} game.')        
+
+        game = db_sess.query(Status).filter(Status.steam_id == status.steam_id and Status.user_id == current_user.id).first()
+        if game != None:
+            return render_template('add_game.html', form=form, message=f'You already have that game in "{AddGameForm.status_list[int(status.status)]}" list.')
 
         db_sess.add(status)
         db_sess.commit()
@@ -133,6 +157,58 @@ def add_game(game_id=None):
     return render_template('add_game.html', title='Adding a game', form=form)
 
 
+@app.route('/delete_game/', methods=['GET', 'POST'])
+@app.route('/delete_game/<int:game_id>', methods=['GET', 'POST'])
+@login_required
+def delete_game(game_id=None):
+    db_sess = db_session.create_session()
+
+    if game_id == None:
+        return redirect('/')
+    
+    game = db_sess.query(Status).filter(Status.steam_id == game_id and Status.user_id == current_user.id).first()
+    db_sess.delete(game)
+    db_sess.commit()
+
+    return redirect('/user')
+
+
+@app.route('/edit_game/', methods=['GET', 'POST'])
+@app.route('/edit_game/<int:game_id>', methods=['GET', 'POST'])
+@login_required
+def edit_game(game_id=None):
+    db_sess = db_session.create_session()
+    form = AddGameForm()
+
+    if game_id == None:
+        return redirect('/')
+    
+    form.steam_id.render_kw = {'readonly': True}
+    form.steam_id.data = game_id
+    
+    if form.validate_on_submit():
+        status = Status()
+        status.user_id = current_user.id
+        status.steam_id = form.steam_id.data
+        status.status = form.status.data
+
+        if not requests.get(f'https://store.steampowered.com/api/appdetails/?appids={str(status.steam_id)}&cc=EE&l=english&v=1').json()[str(status.steam_id)]['success']:
+            return render_template('edit_game.html', title='Editing a game', form=form, message=f'There is no {status.steam_id} game.')        
+
+        game = db_sess.query(Status).filter(Status.steam_id == status.steam_id and Status.user_id == current_user.id).first()
+        db_sess.delete(game)
+        db_sess.commit()
+
+        db_sess.add(status)
+        db_sess.commit()
+
+        return render_template('edit_game.html',
+                               message=f'You added {status.steam_id} to your {AddGameForm.status_list[int(status.status)]} list!',
+                               form=form)
+    
+    return render_template('edit_game.html', title='Editing a game', form=form)
+
+
 @app.route('/user/<int:user_id>', methods=['GET'])
 def user_account(user_id):
     db_sess = db_session.create_session()
@@ -140,8 +216,14 @@ def user_account(user_id):
     user = db_sess.query(User).filter(User.id == user_id).first()
     associations = db_sess.query(Association).filter(Association.user_id == user_id).all()
     reviews = [db_sess.query(Review).filter(Review.id == ass.review_id).first() for ass in associations]
+    data = []
 
-    return render_template('user_account.html', title=user.nickname, user=user, reviews=reviews)
+    for review in reviews:
+        game_id = review.steam_id
+        req = requests.get(f'https://store.steampowered.com/api/appdetails/?appids={game_id}&cc=EE&l=english&v=1').json()
+        data.append(req[str(review.steam_id)])
+
+    return render_template('user_account.html', title=user.nickname, user=user, reviews=reviews, data=data)
 
 
 @app.route('/user')
@@ -152,10 +234,16 @@ def user_settings():
     game_status = db_sess.query(Status).filter(Status.user_id == current_user.id).all()
     associations = db_sess.query(Association).filter(Association.user_id == current_user.id).all()
     reviews = [db_sess.query(Review).filter(Review.id == ass.review_id).first() for ass in associations]
+    data = []
+
+    for game in game_status:
+        game_id = game.steam_id
+        req = requests.get(f'https://store.steampowered.com/api/appdetails/?appids={game_id}&cc=EE&l=english&v=1').json()
+        data.append(req[str(game.steam_id)])
 
     return render_template('user_settings.html', title=f'{current_user.nickname} settings and stuff',
                            game_status=game_status, status_list=AddGameForm.status_list,
-                           reviews=reviews, user=current_user)
+                           reviews=reviews, user=current_user, data=data)
 
 
 @app.route('/logout')
@@ -168,14 +256,15 @@ def logout():
 @app.route('/game/<int:game_id>')
 def game_page(game_id):
     data = requests.get(f'https://store.steampowered.com/api/appdetails/?appids={game_id}&cc=EE&l=english&v=1').json()
+
+    if not data[str(game_id)]['success']:
+        return redirect('/')
+
     table_data = {
         'Developer': ', '.join(data[str(game_id)]['data']['developers']),
         'Publisher': ', '.join(data[str(game_id)]['data']['publishers']),
         'Release date': data[str(game_id)]['data']['release_date']['date']
     }
-
-    if not data[str(game_id)]['success']:
-        return redirect('/')
 
     return render_template('game_page.html', title=data[str(game_id)]['data']['name'],
                            data=data[str(game_id)]['data'], table_data=table_data,
@@ -184,7 +273,12 @@ def game_page(game_id):
 
 @app.errorhandler(401)
 def invalid_auth(e):
-    return redirect('/')
+    return render_template('error.html', title=e, e=e)
+
+
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('error.html', title=e, e=e)
 
 
 def main():
@@ -195,8 +289,7 @@ if __name__ == '__main__':
     main()
 
 
-# TODO errorhandler redirect template
 # TODO when writing down the steam game id, show the actual game somewhere near
-# TODO add fancy review listing page to user public profile
-# TODO add some tops and stuff to the front page
-# TODO add search bar in navbar in base.html to search by id
+# TODO do something with private tags on reviews
+# TODO make user account stats private at will (stats_private in users.py)
+# TODO rest api D:

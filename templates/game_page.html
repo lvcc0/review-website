@@ -24,7 +24,7 @@
                 <a class="btn btn-primary" href="https://store.steampowered.com/app/{{ game_id }}/">Store</a>
                 <a class="btn btn-primary" href="https://steamcommunity.com/app/{{ game_id }}/">Hub</a>
                 {% if current_user.is_authenticated %}
-                    <a class="btn btn-success" href="/add_game">Add</a>
+                    <a class="btn btn-success" href="/add_game/{{ game_id }}">Add</a>
                 {% endif %}
             </div>
         </div>

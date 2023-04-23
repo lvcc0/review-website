@@ -2,12 +2,48 @@
 
 {% block content %}
 
-<h1>
-    {% if current_user.is_authenticated %}
-        Congrats, you are logged in!
-    {% else %}
-        You are not logged in :(
-    {% endif %}
-</h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th colspan="2">Top 10 in 2 weeks</th>
+            <th>average</th>
+            <th>median</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for id, val in top100in2weeks.items() %}
+            <tr>
+                <td>
+                    <a href="/game/{{ id }}">
+                        <img src="{{ datat100i2[loop.index - 1][id|string]['data']['header_image'] }}" width="100px" height="45px" />
+                    </a>
+                </td>
+                <td><a href="/game/{{ id }}">{{ val['name'] }}</a></td>
+                <td>{{ val['average_2weeks'] }}</td>
+                <td>{{ val['median_2weeks'] }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th colspan="2">Top 10 owned</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for id, val in top100owned.items() %}
+            <tr>
+                <td>
+                    <a href="/game/{{ id }}">
+                        <img src="{{ datat100o[loop.index - 1][id|string]['data']['header_image'] }}" width="100px" height="45px" />
+                    </a>
+                </td>
+                <td><a href="/game/{{ id }}">{{ val['name'] }}</a></td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 {% endblock %}

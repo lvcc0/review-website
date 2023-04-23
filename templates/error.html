@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    #main {
+        width: 75%;
+        margin: auto;
+    }
+</style>
+
+<div id="main">
+    <h1><strong>Oh no!</strong></h1>
+    <h2>Looks like an error has occured</h2>
+    <p>error code {{ e }}</p>
+    <a href="/" class="btn btn-primary" style="color: white">Get me back!</a>
+</div>
+
+{% endblock %}
