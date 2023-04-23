@@ -2,6 +2,27 @@
 
 {% block content %}
 
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+    $(function() {
+        $('a#change_private').on('click', function(e) {
+            e.preventDefault()
+            $.getJSON('/change_private',
+                function(data) {
+            });
+
+            if ($('a#change_private').text() == 'Set statistics private') {
+                $('a#change_private').text('Set statistics public')
+            } else {
+                $('a#change_private').text('Set statistics private')
+            }
+            
+
+            return false;
+        });
+    });
+</script>
+
 <div class="container">
     <h1>A private place for <strong>{{ user.nickname }}</strong></h1>
     <div class="container">
@@ -47,6 +68,13 @@
                 </div>
             </div>
         {% endfor %}
+    </div>
+
+    <div class="container">
+        <h2>Some options</h2>
+        <form>
+            <a href="#" id="change_private" class="btn btn-secondary">Set statistics {% if current_user.stats_private %}public{% else %}private{% endif %}</a>
+        </form>
     </div>
 </div>
 

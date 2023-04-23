@@ -1,10 +1,11 @@
 import sqlalchemy as sa
 from sqlalchemy import orm
+from sqlalchemy_serializer import SerializerMixin
 
 from .db_session import SqlAlchemyBase
 
 
-class Association(SqlAlchemyBase):
+class Association(SqlAlchemyBase, SerializerMixin):
     __tablename__ = 'users_to_reviews'
 
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)

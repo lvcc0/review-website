@@ -2,9 +2,27 @@
 
 {% block content %}
 
-<h1>{{ user.nickname }}</h1>
+<h1><strong>{{ user.nickname }}</strong></h1>
 
-{% if not user.stats_private %}
+{% if not user.stats_private or current_user.id == user.id %}
+    <div class="row">
+        <div class="col">
+            <h3>Overall stats</h3>
+            <ul>
+                {% for status in status_list %}
+                    {% set ns = namespace (c = 0) %}
+                    {% for row in game_status %}
+                        {% if row.status == status_list.index(status) %}
+                            {% set ns.c = ns.c + 1 %}
+                        {% endif %}
+                    {% endfor %}
+                    <li><strong>{{ status }}</strong> >> <strong>{{ ns.c }}</strong></li>
+                {% endfor %}
+                <li><strong>reviews</strong> >> <strong>{{ reviews|length }}</strong></li>
+            </ul>
+        </div>
+    </div>
+
     <div>
         {% for review in reviews %}
             <div class="p-5 bg-body-tertiary border rounded-3 row row-cols-2">
@@ -23,6 +41,8 @@
             <br />
         {% endfor %}
     </div>
+{% else %}
+    <h3>Statistics and reviews of <strong>{{ user.nickname }}</strong> are private.</h3>
 {% endif %}
 
 {% endblock %}

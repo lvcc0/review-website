@@ -1,11 +1,12 @@
 import sqlalchemy as sa
 from sqlalchemy import orm
 from datetime import datetime
+from sqlalchemy_serializer import SerializerMixin
 
 from .db_session import SqlAlchemyBase
 
 
-class Review(SqlAlchemyBase):
+class Review(SqlAlchemyBase, SerializerMixin):
     __tablename__ = 'reviews'
 
     id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)

@@ -26,24 +26,25 @@
     </tbody>
 </table>
 
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th colspan="2">Top 10 owned</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for id, val in top100owned.items() %}
-            <tr>
-                <td>
-                    <a href="/game/{{ id }}">
-                        <img src="{{ datat100o[loop.index - 1][id|string]['data']['header_image'] }}" width="100px" height="45px" />
-                    </a>
-                </td>
-                <td><a href="/game/{{ id }}">{{ val['name'] }}</a></td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<br />
+<h1>Newest reviews</h1>
+<div>
+    {% for review in reviews %}
+        <div class="p-5 bg-body-tertiary border rounded-3 row row-cols-2">
+            <div class="col-8">
+                <h3>I{{ " don't" if not review.positive }} recommend <strong>{{ data[loop.index - 1]['data']['name'] }}</strong>.</h3>
 
+                <p>Rated on: {{ review.created_date }}</p>
+                <p>{{ review.content }}</p>
+                <p>By: <a href="/user/{{ users[loop.index - 1].id }}">{{ users[loop.index - 1].nickname }}</a></p>
+            </div>
+            <div class="col-4">
+                <img src="{{ data[loop.index - 1]['data']['header_image'] }}" width="324" height="151" alt=":)"/> <br />
+                <a class="btn btn-primary" href="https://store.steampowered.com/app/{{ review.steam_id }}/">Store</a>
+                <a class="btn btn-primary" href="https://steamcommunity.com/app/{{ review.steam_id }}/">Hub</a>
+            </div>
+        </div>
+        <br />
+    {% endfor %}
+</div>
 {% endblock %}
